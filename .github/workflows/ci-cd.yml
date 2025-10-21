@@ -1,9 +1,9 @@
-name:ci-cd
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
-      - m/ain
+      - main
   pull_request:
     branches:
       - main
@@ -16,49 +16,39 @@ jobs:
       DJANGO_SETTINGS_MODULE: backend.django_app.settings
 
     steps:
-      # 1. Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.8
 
-      # 3. Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest requests
 
-      # 4. Prepare dataset (already committed)
       - name: Prepare dataset
         run: mkdir -p data/raw
-        # CSV is already in repo at data/raw/tax_data.csv
+        # CSV is already committed in repo
 
-      # 5. Preprocess dataset
       - name: Preprocess dataset
         run: python scripts/data_pipeline.py
 
-      # 6. Train ML model
       - name: Train ML model
         run: python models/train_model.py
 
-      # 7. Start Flask API in background
       - name: Start Flask API
         run: python backend/flask_api/app.py &
 
-      # 8. Run Django tests
       - name: Run Django tests
         run: python manage.py test
 
-      # 9. Run all tests with pytest
-      - name: Run all tests
+      - name: Run all tests with pytest
         run: pytest tests
 
-      # 10. Deploy to Heroku (only on main branch)
       - name: Deploy to Heroku
         if: github.ref == 'refs/heads/main'
         run: |
