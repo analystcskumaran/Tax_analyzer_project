@@ -1,9 +1,9 @@
-name: CI/CD Pipeline
+name:ci-cd
 
 on:
   push:
     branches:
-      - main
+      - m/ain
   pull_request:
     branches:
       - main
