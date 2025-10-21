@@ -1,9 +1,16 @@
 import os
-from backend.shared.config import DATABASE_URL
+from backend.shared.config import DATABASE_URL  # absolute import
+  # <-- relative import from shared
 
+# Build paths inside the project
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Security
 SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret')
 DEBUG = True
 ALLOWED_HOSTS = ['*']
+
+# Installed apps
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -13,12 +20,16 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'apps.tax_queries',
 ]
+
+# Database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': DATABASE_URL.replace('sqlite:///', ''),
     }
 }
+
+# Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -28,7 +39,11 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# URL Configuration
 ROOT_URLCONF = 'taxanalyzer.urls'
+
+# Templates
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -44,5 +59,9 @@ TEMPLATES = [
         },
     },
 ]
+
+# WSGI
 WSGI_APPLICATION = 'taxanalyzer.wsgi.application'
+
+# Static files
 STATIC_URL = '/static/'
