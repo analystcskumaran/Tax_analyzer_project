@@ -1,4 +1,4 @@
- name: CI/CD Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -30,18 +30,24 @@ jobs:
           pip install -r requirements.txt
           pip install pytest requests
 
+      - name: Preprocess dataset
+        run: python scripts/data_pipeline.py
+
       - name: Train ML model
         run: python models/train_model.py
 
       - name: Start Flask API
         run: python backend/flask_api/app.py &
 
-      - name: Run tests
+      - name: Run Django tests
+        run: python manage.py test
+
+      - name: Run all tests with pytest
         run: pytest tests
 
       - name: Deploy to Heroku
         if: github.ref == 'refs/heads/main'
         run: |
-          heroku login -i
+          echo ${{ secrets.HEROKU_API_KEY }} | heroku auth:token
           heroku create tax-analyzer-app || echo "App already exists"
           git push heroku main
