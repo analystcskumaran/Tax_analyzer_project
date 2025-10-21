@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+ name: CI/CD Pipeline
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
       DJANGO_SETTINGS_MODULE: backend.django_app.settings
 
     steps:
-      # 1. Checkout repo
+      # 1. Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -33,14 +33,10 @@ jobs:
           pip install -r requirements.txt
           pip install pytest requests
 
-      # 4. Ensure dataset exists
+      # 4. Prepare dataset (already committed)
       - name: Prepare dataset
-        run: |
-          mkdir -p data/raw
-          # Option 1: Commit CSV to repo
-          # cp data/raw/tax_data.csv data/raw/tax_data.csv
-          # Option 2: Download CSV dynamically
-          wget -O data/raw/tax_data.csv https://your-dataset-url.com/tax_data.csv
+        run: mkdir -p data/raw
+        # CSV is already in repo at data/raw/tax_data.csv
 
       # 5. Preprocess dataset
       - name: Preprocess dataset
@@ -62,7 +58,7 @@ jobs:
       - name: Run all tests
         run: pytest tests
 
-      # 10. Deploy to Heroku (main branch only)
+      # 10. Deploy to Heroku (only on main branch)
       - name: Deploy to Heroku
         if: github.ref == 'refs/heads/main'
         run: |
