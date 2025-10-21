@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.env
+models/*.pkl
+data/processed/
+venv/
+*.log
+node_modules/
+.DS_Store
