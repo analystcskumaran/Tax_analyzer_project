@@ -16,39 +16,71 @@ jobs:
       DJANGO_SETTINGS_MODULE: backend.django_app.settings
 
     steps:
+      # 1️⃣ Checkout the repo
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2️⃣ Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.8
 
+      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest requests
+          pip install pytest requests scikit-learn joblib pandas
 
-      - name: Prepare dataset
-        run: mkdir -p data/raw
-        # CSV is already committed in repo
+      # 4️⃣ Ensure folders exist
+      - name: Prepare folders
+        run: |
+          mkdir -p data/raw
+          mkdir -p data/processed
+          mkdir -p models
 
+      # 5️⃣ Preprocess dataset
       - name: Preprocess dataset
         run: python scripts/data_pipeline.py
 
+      # 6️⃣ Verify processed pickle exists and is non-empty
+      - name: Verify processed data
+        run: |
+          if [ ! -s data/processed/cleaned_tax_data.pkl ]; then
+              echo "ERROR: Pickle file missing or empty!"
+              exit 1
+          else
+              echo "Pickle file exists and is ready."
+          fi
+
+      # 7️⃣ Train ML model
       - name: Train ML model
         run: python models/train_model.py
 
+      # 8️⃣ Optional: Verify trained model exists
+      - name: Verify trained model
+        run: |
+          if [ ! -s models/model.pkl ]; then
+              echo "ERROR: Trained ML model is missing!"
+              exit 1
+          else
+              echo "Trained ML model exists."
+          fi
+
+      # 9️⃣ Start Flask API in background
       - name: Start Flask API
         run: python backend/flask_api/app.py &
 
+      # 🔟 Run Django tests
       - name: Run Django tests
         run: python manage.py test
 
-      - name: Run all tests with pytest
+      # 1️⃣1️⃣ Run all pytest tests
+      - name: Run pytest tests
         run: pytest tests
 
+      # 1️⃣2️⃣ Deploy to Heroku (only from main)
       - name: Deploy to Heroku
         if: github.ref == 'refs/heads/main'
         run: |
