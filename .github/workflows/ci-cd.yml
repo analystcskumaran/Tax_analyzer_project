@@ -31,10 +31,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r backend/django_app/requirements.txt
-          pip install -r backend/flask_api/requirements.txt
-          pip install -r frontend/streamlit_app/requirements.txt
-          pip install pytest requests scikit-learn joblib pandas
+          pip install -r requirements.txt  # Use root requirements.txt
 
       # 4️⃣ Ensure folders exist
       - name: Prepare folders
