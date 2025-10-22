@@ -1,16 +1,31 @@
 import os
-from backend.shared.config import DATABASE_URL  # absolute import
-  # <-- relative import from shared
+import sys
 
-# Build paths inside the project
+# ---------------------------------------------------------------------
+# PATH SETUP
+# ---------------------------------------------------------------------
+# Calculate project root (4 levels up from this file)
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.append(project_root)
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Security
+# ---------------------------------------------------------------------
+# CONFIG IMPORT
+# ---------------------------------------------------------------------
+from backend.shared.config import DATABASE_URL
+
+# ---------------------------------------------------------------------
+# SECURITY SETTINGS
+# ---------------------------------------------------------------------
 SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret')
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 
-# Installed apps
+# ---------------------------------------------------------------------
+# APPLICATIONS
+# ---------------------------------------------------------------------
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -21,7 +36,9 @@ INSTALLED_APPS = [
     'apps.tax_queries',
 ]
 
-# Database
+# ---------------------------------------------------------------------
+# DATABASE CONFIGURATION
+# ---------------------------------------------------------------------
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -29,7 +46,9 @@ DATABASES = {
     }
 }
 
-# Middleware
+# ---------------------------------------------------------------------
+# MIDDLEWARE
+# ---------------------------------------------------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -40,10 +59,15 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# URL Configuration
+# ---------------------------------------------------------------------
+# URLS, WSGI
+# ---------------------------------------------------------------------
 ROOT_URLCONF = 'taxanalyzer.urls'
+WSGI_APPLICATION = 'taxanalyzer.wsgi.application'
 
-# Templates
+# ---------------------------------------------------------------------
+# TEMPLATES
+# ---------------------------------------------------------------------
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -60,8 +84,12 @@ TEMPLATES = [
     },
 ]
 
-# WSGI
-WSGI_APPLICATION = 'taxanalyzer.wsgi.application'
-
-# Static files
+# ---------------------------------------------------------------------
+# STATIC FILES
+# ---------------------------------------------------------------------
 STATIC_URL = '/static/'
+
+# ---------------------------------------------------------------------
+# DEFAULT PRIMARY KEY TYPE (fixes Django warning)
+# ---------------------------------------------------------------------
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
