@@ -32,8 +32,8 @@ def predict():
         return jsonify({'predicted_tax': float(prediction)})
 
     except Exception as e:
+        print(f"❌ Prediction error: {e}")  # Added for debugging
         return jsonify({'error': str(e)}), 500
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
