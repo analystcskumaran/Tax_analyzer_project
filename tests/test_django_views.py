@@ -1,9 +1,9 @@
 import os
 import django
-from django.test import TestCase, Client
+from django.test import Client
 
-# Set up Django settings
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.django_app.taxanalyzer.settings')
+# ✅ Correct Django settings
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'taxanalyzer.settings')
 django.setup()
 
 def test_tax_form():

@@ -13,12 +13,12 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DJANGO_SETTINGS_MODULE: backend.django_app.taxanalyzer.settings  # Corrected import path
-      PYTHONPATH: ${{ github.workspace }}  # Add project root to Python path
+      DJANGO_SETTINGS_MODULE: backend.django_app.taxanalyzer.settings
+      PYTHONPATH: ${{ github.workspace }}/backend/django_app  # Ensure Django apps are importable
       PYTHONUNBUFFERED: 1
 
     steps:
-      # 1️⃣ Checkout repo
+      # 1️⃣ Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # 4️⃣ Ensure folders exist
+      # 4️⃣ Prepare folders
       - name: Prepare folders
         run: |
           mkdir -p data/raw data/processed models
@@ -41,7 +41,7 @@ jobs:
       - name: Preprocess dataset
         run: python scripts/data_pipeline.py
 
-      # 6️⃣ Verify processed pickle exists
+      # 6️⃣ Verify processed data
       - name: Verify processed data
         run: |
           if [ ! -s data/processed/cleaned_tax_data.pkl ]; then
@@ -65,32 +65,32 @@ jobs:
               echo "✅ Trained ML model exists."
           fi
 
-      # 9️⃣ Start Flask API in background (before tests)
+      # 9️⃣ Start Flask API in background
       - name: Start Flask API
         run: |
           cd backend/flask_api
           nohup python app.py > flask.log 2>&1 &
-          echo "🚀 Flask API started in background."
+          echo "🚀 Flask API started."
         shell: bash
 
-      # 🔟 Wait for Flask to start (to avoid 500 error)
-      - name: Wait for Flask to initialize
+      # 🔟 Wait for Flask
+      - name: Wait for Flask server
         run: |
-          echo "⏳ Waiting for Flask server..."
-          sleep 10
-          curl -v http://localhost:5000 || true  # Debugging step
+          echo "⏳ Waiting for Flask..."
+          sleep 15
+          curl -v http://localhost:5000 || true
 
       # 1️⃣1️⃣ Run Django tests
       - name: Run Django tests
         working-directory: backend/django_app
         run: python manage.py test
 
-      # 1️⃣2️⃣ Run pytest tests (Flask + ML)
+      # 1️⃣2️⃣ Run all pytest tests
       - name: Run all pytest tests
         run: pytest tests -v
 
-      # 1️⃣3️⃣ (Optional) Test Streamlit app
-      - name: Test Streamlit startup
+      # 1️⃣3️⃣ Optional: Test Streamlit startup
+      - name: Test Streamlit
         run: |
           cd frontend/streamlit_app
           nohup streamlit run app.py > streamlit.log 2>&1 &
