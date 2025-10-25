@@ -1,39 +1,56 @@
 from flask import Flask, request, jsonify
 import joblib
 import os
+import traceback
 
 app = Flask(__name__)
 
-# ✅ Load model safely using absolute path
-MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../models/model.pkl')
-MODEL_PATH = os.path.abspath(MODEL_PATH)
+# ✅ Resolve model path robustly
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.abspath(os.path.join(BASE_DIR, "../../models/model.pkl"))
 
-try:
-    model = joblib.load(MODEL_PATH)
-    print(f"✅ Model loaded successfully from: {MODEL_PATH}")
-except Exception as e:
-    print(f"❌ Error loading model: {e}")
-    model = None
+model = None
+if os.path.exists(MODEL_PATH):
+    try:
+        model = joblib.load(MODEL_PATH)
+        print(f"✅ Model loaded successfully from: {MODEL_PATH}")
+    except Exception as e:
+        print(f"❌ Error loading model: {e}")
+else:
+    print(f"❌ Model file not found at: {MODEL_PATH}")
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    """Predict tax amount based on input JSON: {'income': ..., 'year': ...}"""
     if model is None:
         return jsonify({'error': 'Model not loaded properly'}), 500
 
     try:
-        data = request.get_json()
-        year = data.get('year')
+        data = request.get_json(force=True)
+
         income = data.get('income')
+        year = data.get('year')
 
-        if year is None or income is None:
-            return jsonify({'error': 'Missing required fields: year and income'}), 400
+        # ✅ Input validation
+        if income is None or year is None:
+            return jsonify({'error': 'Missing required fields: income and year'}), 400
 
-        prediction = model.predict([[year, income]])[0]
-        return jsonify({'predicted_tax': float(prediction)})
+        # ✅ Ensure numeric values
+        try:
+            income = float(income)
+            year = int(year)
+        except ValueError:
+            return jsonify({'error': 'Invalid input type — income must be numeric, year must be integer'}), 400
+
+        # ✅ Predict safely (adjust order if your model was trained differently)
+        prediction = model.predict([[income, year]])[0]
+
+        return jsonify({'predicted_tax': float(prediction)}), 200
 
     except Exception as e:
-        print(f"❌ Prediction error: {e}")  # Added for debugging
+        print("❌ Prediction error:\n", traceback.format_exc())
         return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
