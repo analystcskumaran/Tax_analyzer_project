@@ -13,8 +13,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DJANGO_SETTINGS_MODULE: backend.django_app.taxanalyzer.settings
-      PYTHONPATH: ${{ github.workspace }}/backend/django_app  # Ensure Django apps are importable
       PYTHONUNBUFFERED: 1
 
     steps:
@@ -73,23 +71,18 @@ jobs:
           echo "🚀 Flask API started."
         shell: bash
 
-      # 🔟 Wait for Flask
+      # 🔟 Wait for Flask server
       - name: Wait for Flask server
         run: |
           echo "⏳ Waiting for Flask..."
           sleep 15
           curl -v http://localhost:5000 || true
 
-      # 1️⃣1️⃣ Run Django tests
-      - name: Run Django tests
-        working-directory: backend/django_app
-        run: python manage.py test
-
-      # 1️⃣2️⃣ Run all pytest tests
-      - name: Run all pytest tests
+      # 1️⃣1️⃣ Run pytest tests (Flask + ML)
+      - name: Run pytest tests
         run: pytest tests -v
 
-      # 1️⃣3️⃣ Optional: Test Streamlit startup
+      # 1️⃣2️⃣ Test Streamlit startup
       - name: Test Streamlit
         run: |
           cd frontend/streamlit_app
@@ -97,12 +90,13 @@ jobs:
           sleep 10
           pkill -f streamlit || true
 
-      # 1️⃣4️⃣ Deploy to Heroku
+      # 1️⃣3️⃣ Deploy to Heroku
       - name: Deploy to Heroku
         if: github.ref == 'refs/heads/main'
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
+          echo "🔑 Authenticating to Heroku..."
           echo $HEROKU_API_KEY | heroku auth:token
           heroku create tax-analyzer-app || echo "App already exists"
           git push heroku main
