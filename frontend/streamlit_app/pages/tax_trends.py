@@ -1,63 +1,61 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.express as px
 import os
 
-# ------------------------------
-# Load Data
-# ------------------------------
+# Load data
 data_path = os.path.join('..', '..', 'data', 'processed', 'cleaned_tax_data.pkl')
-df = pd.read_pickle(data_path)
+try:
+    df = pd.read_pickle(data_path)
+except FileNotFoundError:
+    st.error("Data file not found.")
+    st.stop()
 
-# ------------------------------
-# Sidebar Navigation
-# ------------------------------
-st.sidebar.title("Tax Analyzer Navigation")
-page = st.sidebar.radio(
-    "Go to",
-    ["Home", "Data Exploration", "Tax Trends", "ML Predictions", "Model Evaluation"]
-)
+st.title("Tax Trends")
+st.write("Analyze trends in tax rates and brackets over time.")
 
-# ------------------------------
-# Import page modules
-# ------------------------------
-from pages import data_exploration, tax_trends, ml_predictions, model_evaluation
+# 1. Bottom Bracket Rate Trends by Year
+st.subheader("Bottom Bracket Rate Trends Over Years")
+if 'Year' in df.columns and 'Bottom Bracket Rate %' in df.columns:
+    fig = px.line(df.groupby('Year')['Bottom Bracket Rate %'].mean().reset_index(), 
+                  x='Year', y='Bottom Bracket Rate %', 
+                  title="Average Bottom Bracket Rate Trends",
+                  color_discrete_sequence=px.colors.qualitative.Set2)
+    fig.update_layout(xaxis_title="Year", yaxis_title="Average Bottom Bracket Rate (%)", 
+                      template="plotly_white", hovermode="x unified")
+    st.plotly_chart(fig)
 
-# ------------------------------
-# Home Page
-# ------------------------------
-if page == "Home":
-    st.title("Tax Analyzer Dashboard - Home")
-    st.write("Welcome! Use the sidebar to explore visualizations.")
+# 2. Bottom Bracket Income Trends
+st.subheader("Bottom Bracket Income Trends")
+if 'Year' in df.columns and 'Bottom Bracket Taxable Income up to' in df.columns:
+    fig = px.line(df.groupby('Year')['Bottom Bracket Taxable Income up to'].mean().reset_index(), 
+                  x='Year', y='Bottom Bracket Taxable Income up to', 
+                  title="Average Bottom Bracket Income Over Years",
+                  color_discrete_sequence=px.colors.sequential.Viridis)
+    fig.update_layout(xaxis_title="Year", yaxis_title="Average Bottom Bracket Income", 
+                      template="plotly_white")
+    st.plotly_chart(fig)
 
-    # Replace with your actual column names
-    YEAR_COL = 'year'
-    TAXRATE_COL = 'tax_rate'
-    COUNTRY_COL = 'country'
+# 3. New: Correlation Heatmap
+st.subheader("Correlation Heatmap")
+numeric_df = df.select_dtypes(include=['number'])
+if not numeric_df.empty:
+    corr = numeric_df.corr()
+    fig = px.imshow(corr, text_auto=True, 
+                    title="Feature Correlations",
+                    color_continuous_scale=px.colors.sequential.RdYlBu)  # Accessible scale
+    fig.update_layout(template="plotly_white")
+    st.plotly_chart(fig)
+else:
+    st.warning("No numeric columns for correlation.")
 
-    # Line chart: average tax rate by year
-    if YEAR_COL in df.columns and TAXRATE_COL in df.columns:
-        st.line_chart(df.groupby(YEAR_COL)[TAXRATE_COL].mean())
-    else:
-        st.warning(f"Columns {YEAR_COL} or {TAXRATE_COL} not found in the dataset.")
-
-    # Bar chart: number of entries per country
-    if COUNTRY_COL in df.columns:
-        st.bar_chart(df[COUNTRY_COL].value_counts())
-    else:
-        st.warning(f"Column {COUNTRY_COL} not found in the dataset.")
-
-# ------------------------------
-# Other Pages
-# ------------------------------
-elif page == "Data Exploration":
-    data_exploration.run(df)
-
-elif page == "Tax Trends":
-    tax_trends.run(df)
-
-elif page == "ML Predictions":
-    ml_predictions.run(df)
-
-elif page == "Model Evaluation":
-    model_evaluation.run()
+# 4. New: Year-over-Year Change in Bottom Bracket Rates
+st.subheader("Year-over-Year Bottom Bracket Rate Changes")
+if 'Year' in df.columns and 'Bottom Bracket Rate %' in df.columns:
+    trend_df = df.groupby('Year')['Bottom Bracket Rate %'].mean().pct_change().reset_index()
+    trend_df.columns = ['Year', 'YoY Change']
+    fig = px.bar(trend_df, x='Year', y='YoY Change', 
+                 title="Year-over-Year Percentage Change in Bottom Bracket Rates",
+                 color_discrete_sequence=px.colors.qualitative.Set2)
+    fig.update_layout(xaxis_title="Year", yaxis_title="YoY Change (%)", template="plotly_white")
+    st.plotly_chart(fig)
