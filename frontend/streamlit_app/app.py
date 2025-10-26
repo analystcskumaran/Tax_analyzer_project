@@ -9,7 +9,7 @@ page = st.sidebar.radio("Go to", ["Home", "Data Exploration", "Tax Trends", "ML 
 if page == "Home":
     st.title("Tax Analyzer Dashboard - Home")
     st.write("Welcome! Use the sidebar to explore visualizations.")
-    st.line_chart(df.groupby('year')['tax_rate'].mean())
+    st.line_chart(df.groupby('Year')['tax_rate'].mean())
     st.bar_chart(df['country'].value_counts())
 elif page == "Data Exploration":
     exec(open('pages/data_exploration.py').read())
