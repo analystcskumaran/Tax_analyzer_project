@@ -66,10 +66,14 @@ jobs:
       # 9️⃣ Start Flask API in background
       - name: Start Flask API
         run: |
-          cd backend/flask_api
-          nohup python app.py > flask.log 2>&1 &
+          cd backend
+          nohup python flask_app.py > flask.log 2>&1 &
           echo "🚀 Flask API started."
         shell: bash
+
+
+      
+
 
       # 🔟 Wait for Flask server
       - name: Wait for Flask server
@@ -91,12 +95,12 @@ jobs:
           pkill -f streamlit || true
 
       # 1️⃣3️⃣ Deploy to Heroku
-      - name: Deploy to Heroku
-        if: github.ref == 'refs/heads/main'
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: |
-          echo "🔑 Authenticating to Heroku..."
-          echo $HEROKU_API_KEY | heroku auth:token
-          heroku create tax-analyzer-app || echo "App already exists"
-          git push heroku main
+      #- name: Deploy to Heroku
+        #if: github.ref == 'refs/heads/main'
+        #env:
+        #  HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        #run: |
+         # echo "🔑 Authenticating to Heroku..."
+         # echo $HEROKU_API_KEY | heroku auth:token
+         # heroku create tax-analyzer-app || echo "App already exists"
+         # git push heroku main
