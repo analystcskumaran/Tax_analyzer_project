@@ -3,59 +3,109 @@ import pandas as pd
 import plotly.express as px
 import os
 
-# Load data
+# =========================
+# Load Data
+# =========================
+st.set_page_config(page_title="📉 Tax Trends", layout="wide")
+
 data_path = os.path.join('..', '..', 'data', 'processed', 'cleaned_tax_data.pkl')
 try:
     df = pd.read_pickle(data_path)
+    st.sidebar.success("✅ Data loaded successfully!")
 except FileNotFoundError:
-    st.error("Data file not found.")
+    st.error(f"❌ Data file not found at: {data_path}")
     st.stop()
 
-st.title("Tax Trends")
-st.write("Analyze trends in tax rates and brackets over time.")
+st.title("📉 Tax Trends Dashboard")
+st.write("Analyze trends in U.S. federal tax rates and income brackets over the years.")
 
-# 1. Bottom Bracket Rate Trends by Year
-st.subheader("Bottom Bracket Rate Trends Over Years")
-if 'Year' in df.columns and 'Bottom Bracket Rate %' in df.columns:
-    fig = px.line(df.groupby('Year')['Bottom Bracket Rate %'].mean().reset_index(), 
-                  x='Year', y='Bottom Bracket Rate %', 
-                  title="Average Bottom Bracket Rate Trends",
-                  color_discrete_sequence=px.colors.qualitative.Set2)
-    fig.update_layout(xaxis_title="Year", yaxis_title="Average Bottom Bracket Rate (%)", 
-                      template="plotly_white", hovermode="x unified")
-    st.plotly_chart(fig)
+# =========================
+# Section 1: Bottom Bracket Rate Over Years
+# =========================
+st.subheader("💰 Average Bottom Bracket Rate Over the Years")
+if {'Year', 'Bottom Bracket Rate %'}.issubset(df.columns):
+    rate_trend = df.groupby('Year')['Bottom Bracket Rate %'].mean().reset_index()
+    fig = px.line(
+        rate_trend,
+        x='Year', y='Bottom Bracket Rate %',
+        title="Average Bottom Bracket Rate Trends",
+        color_discrete_sequence=px.colors.qualitative.Set2
+    )
+    fig.update_layout(
+        xaxis_title="Year",
+        yaxis_title="Average Bottom Bracket Rate (%)",
+        hovermode="x unified",
+        template="plotly_dark"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.warning("Required columns missing for rate trend plot.")
 
-# 2. Bottom Bracket Income Trends
-st.subheader("Bottom Bracket Income Trends")
-if 'Year' in df.columns and 'Bottom Bracket Taxable Income up to' in df.columns:
-    fig = px.line(df.groupby('Year')['Bottom Bracket Taxable Income up to'].mean().reset_index(), 
-                  x='Year', y='Bottom Bracket Taxable Income up to', 
-                  title="Average Bottom Bracket Income Over Years",
-                  color_discrete_sequence=px.colors.sequential.Viridis)
-    fig.update_layout(xaxis_title="Year", yaxis_title="Average Bottom Bracket Income", 
-                      template="plotly_white")
-    st.plotly_chart(fig)
+# =========================
+# Section 2: Bottom Bracket Income Over Years
+# =========================
+st.subheader("🏦 Average Bottom Bracket Income Over the Years")
+if {'Year', 'Bottom Bracket Taxable Income up to'}.issubset(df.columns):
+    income_trend = df.groupby('Year')['Bottom Bracket Taxable Income up to'].mean().reset_index()
+    fig = px.line(
+        income_trend,
+        x='Year', y='Bottom Bracket Taxable Income up to',
+        title="Bottom Bracket Income Growth Over Time",
+        color_discrete_sequence=px.colors.sequential.Viridis
+    )
+    fig.update_layout(
+        xaxis_title="Year",
+        yaxis_title="Average Bottom Bracket Income",
+        template="plotly_dark"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.warning("Required columns missing for income trend plot.")
 
-# 3. New: Correlation Heatmap
-st.subheader("Correlation Heatmap")
-numeric_df = df.select_dtypes(include=['number'])
+# =========================
+# Section 3: Correlation Heatmap
+# =========================
+st.subheader("📊 Correlation Heatmap of Numeric Features")
+numeric_df = df.select_dtypes(include=['float64', 'int64'])
+
 if not numeric_df.empty:
     corr = numeric_df.corr()
-    fig = px.imshow(corr, text_auto=True, 
-                    title="Feature Correlations",
-                    color_continuous_scale=px.colors.sequential.RdYlBu)  # Accessible scale
-    fig.update_layout(template="plotly_white")
-    st.plotly_chart(fig)
+    fig = px.imshow(
+        corr,
+        text_auto=True,
+        title="Feature Correlation Matrix",
+        color_continuous_scale="RdBu_r"  # ✅ Fixed color scale
+    )
+    fig.update_layout(template="plotly_dark")
+    st.plotly_chart(fig, use_container_width=True)
 else:
-    st.warning("No numeric columns for correlation.")
+    st.warning("No numeric columns available for correlation analysis.")
 
-# 4. New: Year-over-Year Change in Bottom Bracket Rates
-st.subheader("Year-over-Year Bottom Bracket Rate Changes")
-if 'Year' in df.columns and 'Bottom Bracket Rate %' in df.columns:
-    trend_df = df.groupby('Year')['Bottom Bracket Rate %'].mean().pct_change().reset_index()
-    trend_df.columns = ['Year', 'YoY Change']
-    fig = px.bar(trend_df, x='Year', y='YoY Change', 
-                 title="Year-over-Year Percentage Change in Bottom Bracket Rates",
-                 color_discrete_sequence=px.colors.qualitative.Set2)
-    fig.update_layout(xaxis_title="Year", yaxis_title="YoY Change (%)", template="plotly_white")
-    st.plotly_chart(fig)
+# =========================
+# Section 4: Year-over-Year Change
+# =========================
+st.subheader("📆 Year-over-Year Change in Bottom Bracket Rate")
+if {'Year', 'Bottom Bracket Rate %'}.issubset(df.columns):
+    yoy = df.groupby('Year')['Bottom Bracket Rate %'].mean().pct_change().reset_index()
+    yoy.columns = ['Year', 'YoY Change']
+    fig = px.bar(
+        yoy,
+        x='Year', y='YoY Change',
+        title="Year-over-Year Change in Bottom Bracket Rate (%)",
+        color='YoY Change',
+        color_continuous_scale="Bluered_r"
+    )
+    fig.update_layout(
+        xaxis_title="Year",
+        yaxis_title="YoY Change (%)",
+        template="plotly_dark"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.warning("Required columns missing for YoY change plot.")
+
+# =========================
+# Footer
+# =========================
+st.markdown("---")
+st.caption("🧠 Developed as part of the Tax Analyzer Project – Data visualization powered by Streamlit & Plotly.")
